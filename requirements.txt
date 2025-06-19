@@ -1,0 +1,3 @@
+Flask
+flask-oauthlib
+edge-tts
