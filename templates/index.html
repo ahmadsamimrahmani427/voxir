@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Voxir - تبدیل متن به صدا</title>
+<style>
+  body { font-family: Tahoma, sans-serif; background: #f0f4f8; color: #333; padding: 2rem; }
+  textarea { width: 100%; height: 120px; font-size: 1.2rem; padding: 0.5rem; }
+  button { margin-top: 1rem; font-size: 1.1rem; padding: 0.6rem 1.2rem; background: #0078d4; color: white; border: none; border-radius: 4px; cursor: pointer; }
+  button:disabled { background: #999; cursor: not-allowed; }
+  audio { margin-top: 1rem; width: 100%; outline:none; }
+  .container { max-width: 600px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgb(0 0 0 / 0.1); }
+  .login-msg { margin-top: 1rem; font-size: 0.95rem; color: #555; }
+  .logo {
+    display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;
+  }
+  .logo img {
+    width: 40px; height: 40px;
+  }
+  .logo-text {
+    font-size: 1.8rem; font-weight: bold; color: #0078d4;
+  }
+  a.login-btn {
+    display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; background: #db4437; color: white; border-radius: 4px; text-decoration: none; font-weight: bold;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="https://cdn-icons-png.flaticon.com/512/727/727245.png" alt="Voxir Logo" />
+      <div class="logo-text">Voxir</div>
+    </div>
+
+    <h2>تبدیل متن فارسی به صدا</h2>
+
+    <textarea id="text-input" placeholder="متن خود را اینجا وارد کنید..."></textarea>
+    <button id="speak-btn">تولید و پخش صدا</button>
+
+    <audio id="audio-player" controls></audio>
+
+    <br />
+
+    <a id="download-link" href="#" download="output.mp3" style="display:none; margin-top: 1rem; font-size: 1.1rem; color: #0078d4;">دانلود فایل صوتی</a>
+
+    {% if 'google_token' not in session %}
+    <div class="login-msg">برای دانلود فایل صوتی لطفاً ابتدا با گوگل وارد شوید.</div>
+    <a class="login-btn" href="{{ url_for('login') }}">ورود با گوگل</a>
+    {% else %}
+    <div class="login-msg" style="color: green;">شما با حساب گوگل وارد شده‌اید.</div>
+    {% endif %}
+  </div>
+
+<script>
+  const btn = document.getElementById('speak-btn');
+  const textInput = document.getElementById('text-input');
+  const audioPlayer = document.getElementById('audio-player');
+  const downloadLink = document.getElementById('download-link');
+
+  btn.addEventListener('click', async () => {
+    const text = textInput.value.trim();
+    if (!text) {
+      alert("لطفاً متن را وارد کنید.");
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = "در حال تولید صدا...";
+    downloadLink.style.display = 'none';
+    audioPlayer.src = "";
+
+    try {
+      const response = await fetch('/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      if (!response.ok) throw new Error("خطا در تولید صدا");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      audioPlayer.src = url;
+      {% if 'google_token' in session %}
+      downloadLink.href = url;
+      downloadLink.style.display = 'inline';
+      {% else %}
+      downloadLink.style.displa
